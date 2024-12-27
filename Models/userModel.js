@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema({
     },
     profile:{
         bio:{type:String},
+        place:{type:String},
+        pin:{type:Number},
+        qualification:{type:String},
         skills:[{type:String}],
         resume:{type:String},
         company:{type:mongoose.Schema.Types.ObjectId, ref:'Company'},
@@ -38,15 +41,8 @@ const userSchema = new mongoose.Schema({
             default:""
         }
     },
-    place:{
-        type:String
-    },
-    pin:{
-        type:Number
-    },
-    Qualification:{
-        type:String
-    },
 },{timestamps:true})
 
-export const User = mongoose.model('User', userSchema)
+const User = mongoose.model('User', userSchema)
+
+module.exports = User

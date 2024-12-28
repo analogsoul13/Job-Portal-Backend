@@ -61,7 +61,7 @@ const login = async (req, res) => {
                 success: false
             })
         }
-        const isPasswordMatch =await bcrypt.compare(password, user.password)
+        const isPasswordMatch = await bcrypt.compare(password, user.password)
         if (!isPasswordMatch) {
             return res.status(400).json({
                 message: "Incorrect email or password !!",
@@ -115,61 +115,65 @@ const logout = async (req, res) => {
 // Update Profile
 const updateProfile = async (req, res) => {
     try {
-        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills } = req.body
-        const file = req.file
-        if (!first_name || !last_name || !email || !phoneNumber || !bio || !place || !pin || !qualification || !skills) {
-            return res.status(400).json({
-                message: "All fields required !",
+        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills } = req.body;
+        const file = req.file; // Handle file if necessary
+
+        let skillsArray = [];
+        if (skills) {
+            skillsArray = skills.split(",");
+        }
+
+        const userId = req.userId; // middleware authentication
+        console.log("User ID from middleware:", req.userId);
+
+        let user = await User.findById(userId);
+        console.log("User found:", user);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found!",
                 success: false
-            })
+            });
         }
 
-        // file cloud
-        
-        const skillsArray = skills.split(",")
-        const userId = req.id // middleware authentication
-        let user = User.findById(userId)
-        if(!user){
-            return res.status(400).json({
-                message:"User not found !",
-                success:false
-            })
-        }
+        // Update fields if they exist in the request body
+        if (first_name) user.first_name = first_name;
+        if (last_name) user.last_name = last_name;
+        if (email) user.email = email;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
+        if (bio) user.profile.bio = bio;
+        if (place) user.profile.place = place;
+        if (pin) user.profile.pin = pin;
+        if (qualification) user.profile.qualification = qualification;
+        if (skills) user.profile.skills = skillsArray;
 
-        // Updating
-        user.first_name = first_name,
-        user.email= email,
-        user.phoneNumber = phoneNumber,
-        user.profile.bio = bio,
-        user.profile.place = place,
-        user.profile.pin = pin,
-        user.profile.qualification = qualification,
-        user.profile.skills = skillsArray
+        // Save the updated user
+        await user.save();
 
-        // Resume
-
-
-        await user.save()
-
+        // Clean user object for the response
         user = {
             _id: user._id,
             first_name: user.first_name,
+            last_name: user.last_name,
             email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
             profile: user.profile
-        }
+        };
 
-        return res.status(400).json({
-            message:"Profile Updated Succesfully !",
+        return res.status(200).json({
+            message: "Profile Updated Successfully!",
             user,
-            success:true
-        })
-
+            success: true
+        });
     } catch (error) {
-
+        console.log(error);
+        return res.status(500).json({
+            message: "An internal server error occurred.",
+            success: false
+        });
     }
-}
+};
+
 
 // Exporting functions
 module.exports = {

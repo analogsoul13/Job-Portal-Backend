@@ -8,7 +8,8 @@ const cors = require('cors');
 const jpServer = express();
 
 // Routes
-const userRoutes = require('./Routes/userRoutes');
+const userRoutes = require('./Routes/userRoutes')
+const companyRoutes = require('./Routes/companyRoutes')
 
 // Middlewares
 jpServer.use(express.json());
@@ -24,6 +25,7 @@ const PORT = process.env.PORT || 3000;
 
 // Routes API
 jpServer.use('/api/v1/user', userRoutes); // User-related routes
+jpServer.use('/api/v1/company', companyRoutes); // Company-related routes
 
 // Global error handling middleware
 jpServer.use((err, req, res, next) => {

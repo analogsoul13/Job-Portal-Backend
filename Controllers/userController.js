@@ -38,6 +38,10 @@ const register = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "An internal server error occurred.",
+            success: false
+        });
 
 
     }
@@ -68,13 +72,6 @@ const login = async (req, res) => {
                 success: false
             })
         }
-        // check role is correct or not
-        if (role != user.role) {
-            return res.status(400).json({
-                message: "Account does not exist with current role !",
-                success: false
-            })
-        }
         // Generate token
         const tokenData = {
             userId: user._id
@@ -92,8 +89,11 @@ const login = async (req, res) => {
 
         return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpsOnly: true, sameSite: 'strict' }).json({
             message: `Welcome Back ${user.first_name}`,
-            success: true
-        })
+            success: true,
+            token,
+            role: user.role,
+            user:user
+        })              
     } catch (error) {
         console.log(error);
 

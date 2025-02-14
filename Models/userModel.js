@@ -12,12 +12,16 @@ const userSchema = new mongoose.Schema({
     email:{
         type:String,
         required:true,
-        unique:true
+        unique:true,
+        lowercase:true,
+        match: [/^\S+@\S+\.\S+$/, "Invalid email format"]
     },
     phoneNumber:{
         type:Number,
         required:true,
-        unique:true
+        unique:true,
+        min: [1000000000, "Phone number must be at least 10 digits"], 
+        max: [999999999999, "Phone number cannot exceed 12 digits"]
     },
     password:{
         type:String,
@@ -29,7 +33,7 @@ const userSchema = new mongoose.Schema({
         required:true
     },
     profile:{
-        bio:{type:String},
+        bio:{type:String, trim: true, maxlength:500},
         place:{type:String},
         pin:{type:Number},
         qualification:{type:String},
@@ -38,7 +42,7 @@ const userSchema = new mongoose.Schema({
         company:{type:mongoose.Schema.Types.ObjectId, ref:'Company'},
         profilePhoto:{
             type:String,
-            default:""
+            default:"https://static-00.iconduck.com/assets.00/avatar-default-icon-988x1024-zsfboql5.png"
         }
     },
 },{timestamps:true})

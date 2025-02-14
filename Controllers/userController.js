@@ -50,8 +50,8 @@ const register = async (req, res) => {
 // User Login
 const login = async (req, res) => {
     try {
-        const { email, password, role } = req.body
-        if (!email || !password || !role) {
+        const { email, password } = req.body
+        if (!email || !password) {
             return res.status(400).json({
                 message: "All fields required !",
                 success: false
@@ -65,6 +65,7 @@ const login = async (req, res) => {
                 success: false
             })
         }
+
         const isPasswordMatch = await bcrypt.compare(password, user.password)
         if (!isPasswordMatch) {
             return res.status(400).json({
@@ -76,18 +77,19 @@ const login = async (req, res) => {
         const tokenData = {
             userId: user._id
         }
-        const token = await jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1D' })
+        const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1D' })
 
         user = {
             _id: user._id,
             first_name: user.first_name,
+            last_name: user.last_name,
             email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
-            profile: user.profile
+            profile: user.profile || {}
         }
 
-        return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpsOnly: true, sameSite: 'strict' }).json({
+        return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true }).json({
             message: `Welcome Back ${user.first_name}`,
             success: true,
             token,
@@ -95,7 +97,11 @@ const login = async (req, res) => {
             user:user
         })              
     } catch (error) {
-        console.log(error);
+        console.error("Login Error:", error);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false
+        });
 
     }
 }
@@ -109,6 +115,21 @@ const logout = async (req, res) => {
         })
     } catch (error) {
 
+    }
+}
+
+// Get Profile
+const getProfile = async (req,res) => {
+    try {
+        const userId = req.userId // from is authenticated middleware
+        const user = await User.findById(userId).select('-password')
+        if(!user) {
+            return res.status(404).json({message: "User not found"})
+        }
+        
+        res.status(200).json(user)
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 }
 
@@ -180,5 +201,6 @@ module.exports = {
     register,
     login,
     logout,
-    updateProfile
+    updateProfile,
+    getProfile
 };

@@ -89,17 +89,18 @@ const login = async (req, res) => {
             profile: user.profile || {}
         }
 
-        return res.status(200).cookie("token", token, { 
-            maxAge: 1 * 24 * 60 * 60 * 1000, 
-            httpOnly: true , 
-            sameSite:"strict"})
+        return res.status(200).cookie("token", token, {
+            maxAge: 1 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            sameSite: "strict"
+        })
             .json({
-            message: `Welcome Back ${user.first_name}`,
-            success: true,
-            token,
-            role: user.role,
-            user:user
-        })              
+                message: `Welcome Back ${user.first_name}`,
+                success: true,
+                token,
+                role: user.role,
+                user: user
+            })
     } catch (error) {
         console.error("Login Error:", error);
         return res.status(500).json({
@@ -123,14 +124,14 @@ const logout = async (req, res) => {
 }
 
 // Get Profile
-const getProfile = async (req,res) => {
+const getProfile = async (req, res) => {
     try {
         const userId = req.userId // from is authenticated middleware
         const user = await User.findById(userId).select('-password')
-        if(!user) {
-            return res.status(404).json({message: "User not found"})
+        if (!user) {
+            return res.status(404).json({ message: "User not found" })
         }
-        
+
         res.status(200).json(user)
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -140,8 +141,8 @@ const getProfile = async (req,res) => {
 // Update Profile
 const updateProfile = async (req, res) => {
     try {
-        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills } = req.body;
-        const file = req.file; // Handle file if necessary
+        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills, resume, github, x } = req.body;
+        const files = req.files; // Handle file if necessary
 
         let skillsArray = [];
         if (skills) {
@@ -170,6 +171,13 @@ const updateProfile = async (req, res) => {
         if (pin) user.profile.pin = pin;
         if (qualification) user.profile.qualification = qualification;
         if (skills) user.profile.skills = skillsArray;
+
+        if (files) {
+            user.profile.profilePhoto = `/uploads/${files.profilePhoto[0].filename}`
+        }
+        if (files.resume) {
+            user.profile.resume = `/uploads/${files.resume[0].filename}`
+        }
 
         // Save the updated user
         await user.save();

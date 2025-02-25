@@ -17,12 +17,12 @@ const userSchema = new mongoose.Schema({
         match: [/^\S+@\S+\.\S+$/, "Invalid email format"]
     },
     phoneNumber: {
-        type: Number,
+        type: String,
         required: true,
         unique: true,
-        min: [1000000000, "Phone number must be at least 10 digits"],
-        max: [999999999999, "Phone number cannot exceed 12 digits"]
+        match: [/^\d{10,12}$/, "Phone number must be 10 to 12 digits"]
     },
+    
     password: {
         type: String,
         required: true,

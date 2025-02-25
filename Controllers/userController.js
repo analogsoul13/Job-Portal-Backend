@@ -141,71 +141,76 @@ const getProfile = async (req, res) => {
 // Update Profile
 const updateProfile = async (req, res) => {
     try {
-        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills, resume, github, x } = req.body;
-        const files = req.files; // Handle file if necessary
+        const userId = req.userId  // From authentication middleware
+        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills, github, x, portfolio } = req.body
+        const files = req.files || {}
 
-        let skillsArray = [];
-        if (skills) {
-            skillsArray = skills.split(",");
-        }
-
-        const userId = req.userId; // middleware authentication
-        console.log("User ID from middleware:", req.userId);
-
-        let user = await User.findById(userId);
-        console.log("User found:", user);
+        // Find user
+        let user = await User.findById(userId)
         if (!user) {
-            return res.status(404).json({
-                message: "User not found!",
-                success: false
-            });
+            return res.status(404).json({ success: false, message: "User not found!" })
         }
 
-        // Update fields if they exist in the request body
-        if (first_name) user.first_name = first_name;
-        if (last_name) user.last_name = last_name;
-        if (email) user.email = email;
-        if (phoneNumber) user.phoneNumber = phoneNumber;
-        if (bio) user.profile.bio = bio;
-        if (place) user.profile.place = place;
-        if (pin) user.profile.pin = pin;
-        if (qualification) user.profile.qualification = qualification;
-        if (skills) user.profile.skills = skillsArray;
+        // Handling skills array
+        const skillsArray = skills ? skills.split(",") : user.profile.skills
 
-        if (files) {
-            user.profile.profilePhoto = `/uploads/${files.profilePhoto[0].filename}`
-        }
-        if (files.resume) {
-            user.profile.resume = `/uploads/${files.resume[0].filename}`
+        // Update basic info
+        const updateFields = {
+            first_name: first_name ?? user.first_name,
+            last_name: last_name ?? user.last_name,
+            email: email ?? user.email,
+            phoneNumber: phoneNumber ?? user.phoneNumber,
         }
 
-        // Save the updated user
-        await user.save();
+        // Update Profile
+        const updatedProfile = {
+            bio: bio ?? user.profile.bio,
+            place: place ?? user.profile.place,
+            pin: pin ?? user.profile.pin,
+            qualification: qualification ?? user.profile.qualification,
+            skills: skillsArray ?? user.profile.skills,
+            socialLinks: {
+                github: github ?? user.profile.socialLinks?.github,
+                x: x ?? user.profile.socialLinks?.x
+            }
+        }
 
-        // Clean user object for the response
-        user = {
-            _id: user._id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            role: user.role,
-            profile: user.profile
-        };
+        // Handle file uploads
+        if (files?.profilePhoto) {
+            updatedProfile.profilePhoto = `/uploads/${files.profilePhoto[0].filename}`
+        }
 
+        if (files?.resume) {
+            updatedProfile.resume = `/uploads/${files.resume[0].filename}`
+        }
+
+        // Update user object - check again here
+        user.set({ ...updateFields, profile: { ...user.profile, ...updatedProfile } })
+        await user.save()
+
+        // Return updated data
         return res.status(200).json({
-            message: "Profile Updated Successfully!",
-            user,
-            success: true
-        });
+            success: true,
+            message: "Profile updated succesfully!",
+            user: {
+                _id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                role: user.role,
+                profile: user.profile
+            }
+        })
+
     } catch (error) {
-        console.log(error);
+        console.error(error)
         return res.status(500).json({
-            message: "An internal server error occurred.",
-            success: false
-        });
+            success: false,
+            message: "An internal server error occured."
+        })
     }
-};
+}
 
 
 // Exporting functions

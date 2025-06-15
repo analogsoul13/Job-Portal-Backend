@@ -141,57 +141,74 @@ const getProfile = async (req, res) => {
 // Update Profile
 const updateProfile = async (req, res) => {
     try {
-        const userId = req.userId  // From authentication middleware
-        const { first_name, last_name, email, phoneNumber, bio, place, pin, qualification, skills, github, x, portfolio } = req.body
-        const files = req.files || {}
+        const userId = req.userId;
+        const {
+            first_name,
+            last_name,
+            email,
+            phoneNumber,
+            bio,
+            place,
+            pin,
+            qualification,
+            skills,
+            github,
+            x,
+            portfolio
+        } = req.body;
 
-        // Find user
-        let user = await User.findById(userId)
+        const files = req.files || {};
+
+        let user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({ success: false, message: "User not found!" })
+            return res.status(404).json({ success: false, message: "User not found!" });
         }
 
-        // Handling skills array
-        const skillsArray = skills ? skills.split(",") : user.profile.skills
+        // Handle skills
+        const skillsArray = skills ? skills.split(",").map(skill => skill.trim()) : user.profile.skills;
 
-        // Update basic info
-        const updateFields = {
-            first_name: first_name ?? user.first_name,
-            last_name: last_name ?? user.last_name,
-            email: email ?? user.email,
-            phoneNumber: phoneNumber ?? user.phoneNumber,
+        // Update top-level fields
+        user.first_name = first_name ?? user.first_name;
+        user.last_name = last_name ?? user.last_name;
+        user.email = email ?? user.email;
+        user.phoneNumber = phoneNumber ?? user.phoneNumber;
+
+        // Update nested profile fields
+        user.profile.bio = bio ?? user.profile.bio;
+        user.profile.place = place ?? user.profile.place;
+        user.profile.pin = pin ?? user.profile.pin;
+        user.profile.qualification = qualification ?? user.profile.qualification;
+        user.profile.skills = skillsArray ?? user.profile.skills;
+
+        // Update social links individually
+        if (!user.profile.socialLinks) {
+            user.profile.socialLinks = {};
+        }
+        if (github !== undefined) {
+            user.profile.socialLinks.github = github;
+        }
+        if (x !== undefined) {
+            user.profile.socialLinks.x = x;
+        }
+        if (portfolio !== undefined) {
+            user.profile.socialLinks.portfolio = portfolio;
         }
 
-        // Update Profile
-        const updatedProfile = {
-            bio: bio ?? user.profile.bio,
-            place: place ?? user.profile.place,
-            pin: pin ?? user.profile.pin,
-            qualification: qualification ?? user.profile.qualification,
-            skills: skillsArray ?? user.profile.skills,
-            socialLinks: {
-                github: github ?? user.profile.socialLinks?.github,
-                x: x ?? user.profile.socialLinks?.x
-            }
-        }
-
-        // Handle file uploads
+        // File uploads
         if (files?.profilePhoto) {
-            updatedProfile.profilePhoto = `/uploads/${files.profilePhoto[0].filename}`
+            user.profile.profilePhoto = `/uploads/profilePhotos/${files.profilePhoto[0].filename}`;
         }
 
         if (files?.resume) {
-            updatedProfile.resume = `/uploads/${files.resume[0].filename}`
+            user.profile.resume = `/uploads/resumes/${files.resume[0].filename}`;
         }
 
-        // Update user object - check again here
-        user.set({ ...updateFields, profile: { ...user.profile, ...updatedProfile } })
-        await user.save()
+        // Save changes
+        await user.save();
 
-        // Return updated data
         return res.status(200).json({
             success: true,
-            message: "Profile updated succesfully!",
+            message: "Profile updated successfully!",
             user: {
                 _id: user._id,
                 first_name: user.first_name,
@@ -201,16 +218,17 @@ const updateProfile = async (req, res) => {
                 role: user.role,
                 profile: user.profile
             }
-        })
+        });
 
     } catch (error) {
-        console.error(error)
+        console.error("Error in updateProfile:", error);
         return res.status(500).json({
             success: false,
-            message: "An internal server error occured."
-        })
+            message: "An internal server error occurred."
+        });
     }
 }
+
 
 
 // Exporting functions

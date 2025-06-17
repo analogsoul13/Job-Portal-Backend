@@ -39,35 +39,67 @@ const postJob = async (req, res) => {
 // to get all jobs for candidate
 const getAllJobs = async (req, res) => {
     try {
-        const keyword = req.query.keyword || ""
-        const query = {
-            $or: [
-                { title: { $regex: keyword, $options: "i" } },
-                { description: { $regex: keyword, $options: "i" } },
-            ]
+        const { search, minSalary, maxSalary, location, experienceLevel, page, limit } = req.query
+        let query = {}
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } }
+            ];
         }
-        const jobs = await Job.find(query).populate({
-            path: "company"
-        }).sort({ createdAt: -1 }) // Sort the results by 'createdAt' in descending order (most recent first)
+
+        if (!isNaN(minSalary) && !isNaN(maxSalary)) {
+            query.salary = {
+                $gte: parseInt(minSalary),
+                $lte: parseInt(maxSalary)
+            };
+        }
+
+
+        if (location) {
+            query.location = { $regex: location, $options: "i" }
+        }
+
+        if (!isNaN(experienceLevel)) {
+            query.experienceLevel = { $lte: parseInt(experienceLevel) };
+        }
+
+
+
+        const pageNumber = parseInt(page) || 1
+        const pageSize = parseInt(limit) || 10
+        const skip = (pageNumber - 1) * pageSize
+
+        const jobs = await Job.find(query)
+            .populate("company")
+            .skip(skip)
+            .limit(pageSize)
+            .sort({ createdAt: -1 })
+
+        const totalJobs = await Job.countDocuments(query)
+
         if (jobs.length === 0) {
             return res.status(404).json({
-                message: "No jobs found matching your criteria!",
+                message: "No jobs found matching the filters",
                 success: false
             })
         }
-        return res.status(200).json({
+
+        res.status(200).json({
+            totalJobs,
+            page: pageNumber,
+            totalPages: Math.ceil(totalJobs / pageSize),
             jobs,
             success: true
-        })
+        });
+
     } catch (error) {
-        console.log(error);
-
         res.status(500).json({
-            message: "Error getting all jobs!",
-            error,
+            message: "Server Error",
+            error: error.message,
             success: false
-        })
-
+        });
     }
 }
 
@@ -123,9 +155,19 @@ const getJobsByRecruiter = async (req, res) => {
     }
 }
 
+const getAllLocations = async (req, res) => {
+    try {
+        const locations = await Job.distinct('location')
+        res.status(200).json({ locations })
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch locations' })
+    }
+}
+
 module.exports = {
     postJob,
     getAllJobs,
     getJobById,
-    getJobsByRecruiter
+    getJobsByRecruiter,
+    getAllLocations
 }

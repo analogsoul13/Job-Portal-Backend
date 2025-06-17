@@ -39,7 +39,7 @@ const registerCompany = async (req, res) => {
 // Fetch Companies by User
 const getCompany = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.userId
         const companies = await Company.find({ userId });
         return res.status(200).json({
             message: "Companies fetched successfully!",

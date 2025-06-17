@@ -3,7 +3,7 @@ const Job = require("../Models/jobModel")
 
 const applyJob = async (req, res) => {
     try {
-        const userId = req.userId
+        const userId = req.user.userId
         const jobId = req.params.id
         if (!jobId) {
             return res.status(400).json({
@@ -56,7 +56,7 @@ const applyJob = async (req, res) => {
 // Get all applications for candidate
 const getAppliedJobs = async (req, res) => {
     try {
-        const userId = req.userId // check again here
+        const userId = req.user.userId
         const application = await Application.find({ applicant: userId }).sort({ createdAt: -1 }).populate({
             path: 'job',
             options: { sort: { createdAt: -1 } },

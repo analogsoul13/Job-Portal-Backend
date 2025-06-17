@@ -89,18 +89,14 @@ const login = async (req, res) => {
             profile: user.profile || {}
         }
 
-        return res.status(200).cookie("token", token, {
-            maxAge: 1 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
-            sameSite: "strict"
-        })
-            .json({
-                message: `Welcome Back ${user.first_name}`,
-                success: true,
-                token,
-                role: user.role,
-                user: user
-            })
+        return res.status(200).json({
+            message: `Welcome Back ${user.first_name}`,
+            success: true,
+            token,
+            role: user.role,
+            user: user
+        });
+
     } catch (error) {
         console.error("Login Error:", error);
         return res.status(500).json({
@@ -114,10 +110,11 @@ const login = async (req, res) => {
 // Logout
 const logout = async (req, res) => {
     try {
-        return res.status(200).cookie("token", "", { maxAge: 0 }).json({
-            message: "Logged Out Succesfully",
+        return res.status(200).json({
+            message: "Logged out successfully",
             success: true
-        })
+        });
+
     } catch (error) {
 
     }
@@ -126,7 +123,7 @@ const logout = async (req, res) => {
 // Get Profile
 const getProfile = async (req, res) => {
     try {
-        const userId = req.userId // from is authenticated middleware
+        const userId = req.user.userId;
         const user = await User.findById(userId).select('-password')
         if (!user) {
             return res.status(404).json({ message: "User not found" })
@@ -135,13 +132,14 @@ const getProfile = async (req, res) => {
         res.status(200).json(user)
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
+        console.log("Error in getProfile:", error);
     }
 }
 
 // Update Profile
 const updateProfile = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.userId;
         const {
             first_name,
             last_name,

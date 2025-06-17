@@ -18,17 +18,20 @@ jpServer.use(express.json());
 jpServer.use(cookieParser());
 
 const corsOptions = {
-    origin: 'http://localhost:5173',
-    credentials: true,
-};
+  origin: 'http://localhost:5173',
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}
 jpServer.use(cors(corsOptions));
 
-const PORT = process.env.PORT || 3000;
+jpServer.use("/uploads", express.static("uploads"))
+
+const PORT = 3000 || process.env.PORT 
 
 // Routes API
 jpServer.use('/api/v1/user', userRoutes); // User-related routes
 jpServer.use('/api/v1/company', companyRoutes); // Company-related routes
-jpServer.use('/api/v1/job', jobRoutes) // Job related routes
+jpServer.use('/api/v1/jobs', jobRoutes) // Job related routes
 jpServer.use('/api/v1/application', applicationRoutes) // Application related routes
 
 // Global error handling middleware

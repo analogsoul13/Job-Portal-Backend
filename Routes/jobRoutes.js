@@ -4,9 +4,9 @@ const { postJob, getAllJobs, getJobsByRecruiter, getJobById } = require('../Cont
 
 const router = express.Router()
 
-router.route("/post").post(isAuthenticated, postJob)
-router.route("/get").get(isAuthenticated, getAllJobs)
-router.route("/getjobsbyrecruiter").get(isAuthenticated, getJobsByRecruiter)
-router.route("/get/:id").get(isAuthenticated, getJobById) // check here
+router.route("/").post(isAuthenticated, postJob)
+router.route("/").get(isAuthenticated, getAllJobs)
+router.route("/recruiter").get(isAuthenticated, getJobsByRecruiter)
+router.route("/jobs/:id").get(isAuthenticated, getJobById) // check here
 
 module.exports = router

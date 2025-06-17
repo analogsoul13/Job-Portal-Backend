@@ -4,7 +4,7 @@ const Job = require("../Models/jobModel")
 const postJob = async (req, res) => {
     try {
         const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body
-        const userId = req.userId
+        const userId = req.user.userId
         if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
             return res.status(400).json({
                 message: "All fields required !",
@@ -98,7 +98,8 @@ const getJobById = async (req, res) => {
 const getJobsByRecruiter = async (req, res) => {
     try {
         // Ensure the user is a recruiter /saved for later
-        const recruiterId = req.userId  // user Id
+        const recruiterId = req.user.userId  // user
+
         const jobs = await Job.find({ created_by: recruiterId }).populate('company')
 
         if (jobs.length === 0) {

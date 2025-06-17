@@ -1,25 +1,38 @@
+const fs = require('fs')
 const multer = require('multer');
-const path = require("path")
+
+
+// Ensure the upload folders exist
+const ensureDirectoryExists = (dir) => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+};
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
+        let uploadPath = "uploads"; 
+
         if (file.fieldname === "profilePhoto") {
-            cb(null, "uploads/profilePhotos") // Storing in specific folder
+            uploadPath = "uploads/profilePhotos";
         } else if (file.fieldname === "resume") {
-            cb(null, "uploads/resumes") // storing resume in different folder
+            uploadPath = "uploads/resumes";
         } else {
-            cb(new Error("Invalid file field"), false)
+            return cb(new Error("Invalid file field"), false);
         }
+
+        ensureDirectoryExists(uploadPath);
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Generate unique filenames
+        cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
 
 const fileFilter = (req, file, cb) => {
     if (file.fieldname === "profilePhoto") {
         // Allow only images for profile photos
-        if (!file.mimetype.startsWith("image/")) {
+        if (!file.mimetype.startsWith("image")) {
             return cb(new Error("Only image files are allowed for profile photos!"), false);
         }
     } else if (file.fieldname === "resume") {

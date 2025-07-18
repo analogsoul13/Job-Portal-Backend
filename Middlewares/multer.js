@@ -11,12 +11,14 @@ const ensureDirectoryExists = (dir) => {
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        let uploadPath = "uploads"; 
+        let uploadPath = "uploads";
 
         if (file.fieldname === "profilePhoto") {
             uploadPath = "uploads/profilePhotos";
         } else if (file.fieldname === "resume") {
             uploadPath = "uploads/resumes";
+        } else if (file.fieldname === "logo") {
+            uploadPath = "uploads/companyLogos";
         } else {
             return cb(new Error("Invalid file field"), false);
         }
@@ -50,8 +52,9 @@ const upload = multer({
     fileFilter: fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 } // Limit file size to 5MB
 }).fields([
-    { name: "profilePhoto", maxCount: 1 }, 
-    { name: "resume", maxCount: 1 }
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "resume", maxCount: 1 },
+    { name: "logo", maxCount: 1 }
 ]);
 
 module.exports = upload;

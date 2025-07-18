@@ -3,23 +3,30 @@ const Company = require('../Models/companyModel');
 // Register Company
 const registerCompany = async (req, res) => {
     try {
-        const { companyName } = req.body;
-        if (!companyName) {
+        const { name, description, location, website } = req.body;
+        if (!name) {
             return res.status(400).json({
                 message: "Company name is required",
                 success: false,
             });
         }
-        let company = await Company.findOne({ name: companyName });
+        let company = await Company.findOne({ name });
         if (company) {
             return res.status(400).json({
                 message: "Company already exists!",
                 success: false,
             });
         }
+
+        const logoPath = req.file?.logo?.[0]?.path;
+
         company = await Company.create({
-            name: companyName,
-            userId: req.userId,
+            name,
+            description,
+            location,
+            website,
+            logo: logoPath ? `/${logoPath}` : "",
+            userId: req.user.userId,
         });
 
         return res.status(201).json({
@@ -83,15 +90,22 @@ const getCompanyById = async (req, res) => {
 const updateCompany = async (req, res) => {
     try {
         const { name, description, website, location } = req.body;
-        const file = req.file;
 
         const updateData = {};
+
         if (name) updateData.name = name;
         if (description) updateData.description = description;
         if (website) updateData.website = website;
         if (location) updateData.location = location;
 
-        const company = await Company.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        if (req.files && req.files?.logo && req.files.logo.length > 0) {
+            updateData.logo = "/uploads/companyLogos/" + req.files.logo[0].filename;
+        }
+
+        const company = await Company.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user.userId }, // Check ownership
+            updateData,
+            { new: true });
 
         if (!company) {
             return res.status(404).json({

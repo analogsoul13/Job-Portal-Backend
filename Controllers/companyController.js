@@ -1,4 +1,5 @@
 const Company = require('../Models/companyModel');
+const User = require('../Models/userModel');
 
 // Register Company
 const registerCompany = async (req, res) => {
@@ -28,6 +29,17 @@ const registerCompany = async (req, res) => {
             logo: logoPath ? `/${logoPath}` : "",
             userId: req.user.userId,
         });
+
+        // Update users's (recruiter) company field
+        await User.findByIdAndUpdate(
+            req.user.userId,
+            {
+                $set: {
+                    'profile.company': company._id,
+                },
+            },
+            { new: true }
+        )
 
         return res.status(201).json({
             message: "Company registered successfully!",

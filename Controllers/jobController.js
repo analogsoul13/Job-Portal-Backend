@@ -18,8 +18,8 @@ const postJob = async (req, res) => {
             salary: Number(salary),
             location,
             jobType,
-            experienceLevel: experience,
-            position,
+            experienceLevel: Number(experience),
+            position: Number(position),
             company: companyId,
             created_by: userId
         })

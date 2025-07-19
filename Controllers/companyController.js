@@ -19,7 +19,7 @@ const registerCompany = async (req, res) => {
             });
         }
 
-        const logoPath = req.file?.logo?.[0]?.path;
+        const logoPath = req.files?.logo?.[0]?.path;
 
         company = await Company.create({
             name,
@@ -139,4 +139,27 @@ const updateCompany = async (req, res) => {
     }
 };
 
-module.exports = { registerCompany, getCompany, getCompanyById, updateCompany };
+const deletCompany = async (req, res) => {
+    try {
+        const companyId = req.params.id
+        const company = await Company.findById(companyId)
+        if (!company) {
+            return res.status(404).json({ message: "Company not found" })
+        }
+
+        await Company.findByIdAndDelete(companyId)
+
+        await User.updateOne(
+            { "profile.company": companyId },
+            { $unset: { "profile.company": "" } }
+        )
+
+        res.status(200).json({ message: "Company deleted succesfully" })
+
+    } catch (error) {
+        console.error("Delete company error:", error)
+        res.status(500).json({ message: "Server Error" })
+    }
+}
+
+module.exports = { registerCompany, getCompany, getCompanyById, updateCompany, deletCompany };

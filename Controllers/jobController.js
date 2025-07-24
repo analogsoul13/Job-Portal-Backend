@@ -73,6 +73,10 @@ const getAllJobs = async (req, res) => {
 
         const jobs = await Job.find(query)
             .populate("company")
+            .populate({
+                path: "created_by",
+                select: "first_name last_name email"
+            })
             .skip(skip)
             .limit(pageSize)
             .sort({ createdAt: -1 })

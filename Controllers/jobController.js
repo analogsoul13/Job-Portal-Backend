@@ -159,6 +159,26 @@ const getJobsByRecruiter = async (req, res) => {
     }
 }
 
+const deleteJob = async (req, res) => {
+    try {
+        const jobId = req.params.id
+        const userId = req.user.userId
+        const job = await Job.findOneAndDelete({ _id: jobId, created_by: userId })
+
+        if (!job) {
+            return res.status(404).json({ message: "Job not found or not authorized", success: false })
+        }
+
+        res.status(200).json({ message: "Job deleted succesfully", success: true })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error deleting job",
+            error: error.message,
+            success: false
+        })
+    }
+}
+
 const getAllLocations = async (req, res) => {
     try {
         const locations = await Job.distinct('location')
@@ -173,5 +193,6 @@ module.exports = {
     getAllJobs,
     getJobById,
     getJobsByRecruiter,
+    deleteJob,
     getAllLocations
 }
